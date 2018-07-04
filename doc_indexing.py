@@ -21,7 +21,7 @@ def sanitize(text):
     return text.strip().replace('\n', '')
 
 def find_doc_no(soup):
-    return soup.find('DOCNO').string
+    return soup.find('DOCNO').string.strip()
 
 def find_all_texts(soup):
     text = ''
@@ -53,8 +53,6 @@ if es.ping():
                 soup = BeautifulSoup(d, "lxml-xml")
 
                 docs = soup.findAll('DOC')
-
-                print len(docs)
 
                 for doc in docs:
                     doc_id = find_doc_no(doc)
