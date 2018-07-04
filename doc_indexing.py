@@ -4,9 +4,8 @@ import os
 import json
 
 data_path = '/home/prdx/Documents/CS6200-Summer/A1/AP_DATA/ap89_collection/'
-
-'For list of stop words, stem words'
 es_script_path = '/home/prdx/Documents/CS6200-Summer/A1/es/'
+
 es = Elasticsearch()
 
 class Data(object):
