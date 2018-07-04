@@ -3,8 +3,9 @@ from elasticsearch5 import Elasticsearch
 import os
 import json
 
-data_path = '/home/prdx/Documents/CS6200-Summer/A1/AP_DATA/ap89_collection/'
-es_script_path = '/home/prdx/Documents/CS6200-Summer/A1/es/'
+DATA_PATH = '/home/prdx/Documents/CS6200-Summer/A1/AP_DATA/ap89_collection/'
+ES_SCRIPTS_PATH = '/home/prdx/Documents/CS6200-Summer/A1/es/'
+INDEX_NAME = 'ap89_collection'
 
 es = Elasticsearch()
 
@@ -16,42 +17,58 @@ class Data(object):
         self.doc_id = doc_id
         self.text = text
 
-def find_and_sanitize(soup, params):
-    return soup.find(params).string.strip().replace('\n', '')
+def sanitize(text):
+    return text.strip().replace('\n', '')
+
+def find_doc_no(soup):
+    return soup.find('DOCNO').string
+
+def find_all_texts(soup):
+    text = ''
+    elements = soup.findAll('TEXT')
+    for element in elements:
+        text = text + ' ' + sanitize(element.string)
+
+    return text
 
 def get_es_script(script_name):
-    with open(es_script_path + script_name + '.json') as s:
+    with open(ES_SCRIPTS_PATH + script_name + '.json') as s:
         body = json.load(s)
     return body
 
 data_collection = []
 
-
 if es.ping():
     # Delete already existing index
-    es.indices.delete(index = 'ap89_collection', ignore = [400, 404])
+    es.indices.delete(index = INDEX_NAME, ignore = [400, 404])
 
     # Create initial index
-    es.indices.create('ap89_collection', 
+    es.indices.create(INDEX_NAME, 
             body = get_es_script('index_create'))
     
     # Go through all of the corpus and store it
-    for doc in os.listdir(data_path):
-        if doc.startswith('ap'):
-            with open(data_path + doc) as d:
+    for f in os.listdir(DATA_PATH):
+        if f.startswith('ap'):
+            with open(DATA_PATH + f) as d:
                 soup = BeautifulSoup(d, "lxml-xml")
-                doc_id = find_and_sanitize(soup, 'DOCNO')
-                text = find_and_sanitize(soup, 'TEXT')
 
-                # Store it in case we need it
-                data_collection.append(Data(doc_id, text))
+                docs = soup.findAll('DOC')
 
-                es.index(index = 'ap89_collection',
-                        doc_type = 'document',
-                        id = doc_id,
-                        body = {
-                            "doc_id": doc_id,
-                            "text": text,
-                            }
-                        )
+                print len(docs)
+
+                for doc in docs:
+                    doc_id = find_doc_no(doc)
+                    text = find_all_texts(doc)
+
+                    # Store it in case we need it
+                    data_collection.append(Data(doc_id, text))
+
+                    es.index(index = INDEX_NAME,
+                            doc_type = 'document',
+                            id = doc_id,
+                            body = {
+                                "doc_id": doc_id,
+                                "text": text,
+                                }
+                            )
 
