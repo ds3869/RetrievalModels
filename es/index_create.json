@@ -26,6 +26,7 @@
         },
         "text": {
           "type": "text",
+          "fielddata": "true",
           "store": "true",
           "index": "analyzed",
           "term_vector": "with_positions_offsets_payloads",

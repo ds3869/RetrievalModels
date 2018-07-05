@@ -6,7 +6,6 @@ es = Elasticsearch()
 
 if es.ping():
     file_list = get_file_list()
-    print file_list
 
     result = es.termvectors(index = Constants.INDEX_NAME, 
             doc_type = Constants.DOC_TYPE,
