@@ -20,15 +20,11 @@ class BuiltInModel(object):
                         score = str(result['_score']))
                 rank += 1
 
-    def query(self, keywords = "United States Nuclear"):
+    def query(self, keywords = ""):
         body = get_es_script('search')
         body['query']['match']['text'] = keywords 
+        body['size'] = Constants.MAX_OUTPUT
         res = es.search(index = Constants.INDEX_NAME,
                 body = body
                 )
         return res['hits']['hits']
-
-
-
-builtin = BuiltInModel()
-builtin.score()

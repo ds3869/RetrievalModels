@@ -18,19 +18,18 @@ if es.ping():
     # Go through all of the corpus and store it
     for f in os.listdir(Constants.DATA_PATH):
         if f.startswith('ap'):
-            with open(Constants.DATA_PATH + f) as d:
-                soup = BeautifulSoup(d, "lxml-xml")
-
-                docs = soup.findAll('DOC')
+            with open(Constants.DATA_PATH + f, 'r') as d:
+                d = d.read()
+                docs = find_docs_by_regex(d)
 
                 print "Processing {0}, with {1} docs".format(f, len(docs)) 
 
                 for doc in docs:
-                    doc_id = find_doc_no(doc)
-                    text = find_all_texts(doc)
+                    doc_id = find_doc_no_by_regex(doc)
+                    text = find_all_texts_by_regex(doc)
 
                     # Store it in case we need it
-                    data_collection.append(Data(doc_id, text))
+                    # data_collection.append(Data(doc_id, text))
 
                     es.index(index = Constants.INDEX_NAME,
                             doc_type = Constants.DOC_TYPE,
@@ -38,6 +37,7 @@ if es.ping():
                             body = {
                                 "doc_id": doc_id,
                                 "text": text,
+                                "doc_length": len(text.split(' '))
                                 }
                             )
 
