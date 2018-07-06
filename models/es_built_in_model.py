@@ -7,9 +7,10 @@ from utils.text import build_query_list, get_stopwords, write_output
 
 class BuiltInModel(object):
     def score(self):
+        print "Processing: built in model"
         query_list = build_query_list()
         for key in query_list:
-            results = self.query(query_list[key])
+            results = self.query(query_list[key])['hits']['hits']
             rank = 1
             for result in results:
                 write_output(
@@ -21,10 +22,4 @@ class BuiltInModel(object):
                 rank += 1
 
     def query(self, keywords = ""):
-        body = get_es_script('search')
-        body['query']['match']['text'] = keywords 
-        body['size'] = Constants.MAX_OUTPUT
-        res = es.search(index = Constants.INDEX_NAME,
-                body = body
-                )
-        return res['hits']['hits']
+        return search(keywords)

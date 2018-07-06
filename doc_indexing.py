@@ -9,11 +9,10 @@ data_collection = []
 
 if es.ping():
     # Delete already existing index
-    es.indices.delete(index = Constants.INDEX_NAME, ignore = [400, 404])
+    delete_index()
 
     # Create initial index
-    es.indices.create(Constants.INDEX_NAME, 
-            body = get_es_script('index_create'))
+    create_index()
     
     # Go through all of the corpus and store it
     for f in os.listdir(Constants.DATA_PATH):
@@ -27,17 +26,8 @@ if es.ping():
                 for doc in docs:
                     doc_id = find_doc_no_by_regex(doc)
                     text = find_all_texts_by_regex(doc)
+                    doc_length = len(text.split(' '))
 
-                    # Store it in case we need it
-                    # data_collection.append(Data(doc_id, text))
+                    store_document(doc_id, text, doc_length)
 
-                    es.index(index = Constants.INDEX_NAME,
-                            doc_type = Constants.DOC_TYPE,
-                            id = doc_id,
-                            body = {
-                                "doc_id": doc_id,
-                                "text": text,
-                                "doc_length": len(text.split(' '))
-                                }
-                            )
 
