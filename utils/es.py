@@ -1,5 +1,6 @@
 from elasticsearch5 import Elasticsearch
 from constants import Constants
+from text import get_file_list
 import json
 
 es = Elasticsearch()
@@ -41,23 +42,51 @@ def get_field_statistics(_id = 'AP890201-0001'):
             body = get_es_script('term_vectors')) 
     return result["term_vectors"]['text']['field_statistics']
 
-def get_terms_statistics(_id = 'AP890201-0001'):
+def get_term_statistics(term):
     """Get terms statistics
-    return dictionary of term statistics
+    return dictionary of term frequency of each documents
     """
-    result = es.termvectors(index = Constants.INDEX_NAME, 
-            doc_type = Constants.DOC_TYPE,
-            id = _id, 
-            body = get_es_script('term_vectors')) 
-    return result["term_vectors"]['text']['terms']
+    print "Getting tf for term: {0}".format(term)
+    file_list = get_file_list()
+    tf_wd = {}
+    df_w = 0
 
+    for doc in file_list:
+        tf_wd[doc] = 0
+
+    body = get_es_script('tf')
+    body['query']['match']['text'] = term
+    body['script_fields']['index_tf']['script']['inline'] = \
+            "_index['text']['" + term + "'].tf()"
+
+    result = es.search(
+        index = Constants.INDEX_NAME,
+        doc_type= Constants.DOC_TYPE,
+        size=5000,
+        scroll='15m',
+        body=body)
+
+    scroll_id = result['_scroll_id']
+    while True:
+        if len(result['hits']['hits']) == 0:
+            break
+        for doc in result['hits']['hits']:
+            doc_id = doc['_id']
+            doc_info = doc['fields']
+            tf_wd[doc_id] = doc_info['index_tf'][0]
+
+            # Get total number of document 
+            if tf_wd[doc_id] > 0:
+                df_w += 1
+        result = es.scroll(scroll_id = scroll_id, scroll = '15m')
+
+    return df_w, tf_wd
 
 def get_vocab_size():
     """Get vocabulary size of the corpus
     return int vocabulary size
     """
     body = get_es_script('agg_vocab_size')
-    print body
     return search("", body)['aggregations']['vocabSize']['value']
 
 
@@ -70,6 +99,7 @@ def search(keywords = "", body = {}):
         body = get_es_script('search')
         body['query']['match']['text'] = keywords 
         body['size'] = Constants.MAX_OUTPUT
+        
 
     res = es.search(index = Constants.INDEX_NAME,
             body = body

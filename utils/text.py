@@ -1,6 +1,7 @@
 import os
 import re
 from constants import Constants
+from nltk.stem import PorterStemmer
 
 def sanitize(text):
     return text.strip().replace('\n', '')
@@ -86,10 +87,18 @@ def remove_stopwords(text):
     return text
 
 def remove_punctuation(text):
-    punctuations = ['.', ',', '"', '-', '(', ')']
+    punctuations = ['.', ',', '"', '-', '(', ')', '\'']
     for p in punctuations:
         text = text.replace(p, '')
     return text
+
+def stem_sentence(text):
+    stemmer = PorterStemmer()
+
+    words = text.split(' ')
+    for i in range(len(words)):
+        words[i] = stemmer.stem(words[i])
+    return ' '.join(words)
 
 def build_query_list():
     key_val = []
@@ -104,6 +113,9 @@ def build_query_list():
             if len(key_val) == 2:
                 key_val[1] = remove_stopwords(key_val[1])
                 query_list[key_val[0]] = key_val[1]
+
+        for key in query_list:
+            query_list[key] = stem_sentence(query_list[key]) 
 
         return query_list
 

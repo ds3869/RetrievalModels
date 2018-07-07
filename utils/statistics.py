@@ -1,5 +1,6 @@
 from es import *
 
+
 class IndexStatistics(object):
     doc_count = 0
     avg_doc_length = 0
@@ -20,12 +21,12 @@ class IndexStatistics(object):
         self.avg_doc_length = self.get_avg_doc_length()
         self.vocab_size = self.get_vocab_size()
 
-
-
 class DocumentStatistics(object):
-    term_freq_dict = {}
     doc_no = ''
+    length = 0
 
     def __init__(self, doc_no):
         self.doc_no = doc_no
-        self.term_freq_dict = get_terms_statistics(doc_no)
+        body = get_es_script('get_length')
+        body['query']['terms']['_id'] = [doc_no]
+        self.length = search(body = body)['hits']['hits'][0]['fields']['doc_length']
