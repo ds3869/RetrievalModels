@@ -26,8 +26,15 @@ if es.ping():
                 for doc in docs:
                     doc_id = find_doc_no_by_regex(doc)
                     text = find_all_texts_by_regex(doc)
+                    text = text.strip()
                     doc_length = len(text.split(' '))
+                    if text != '':
+                        try:
+                            store_document(doc_id, text, doc_length)
+                        except:
+                            print "Failed to store document"
+                    elif text == '':
+                        print "Empty document found: {0}".format(doc_id)
 
-                    store_document(doc_id, text, doc_length)
 
 
