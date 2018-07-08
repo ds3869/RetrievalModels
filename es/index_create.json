@@ -11,9 +11,17 @@
       "analyzer": {
         "my_english": {
           "type": "english",
-          "stopwords_path": "stoplist.txt"
+          "stopwords_path": "stoplist.txt",
+          "tokenizer" : "standard",
+          "filter": ["standard", "lowercase", "stemmer"]
         }
       }
+    }
+  },
+  "filter": {
+    "stemmer": {
+      "type": "stemmer",
+      "name": "porter_stem"
     }
   },
   "mappings": {
@@ -28,7 +36,6 @@
           "type": "text",
           "fielddata": "true",
           "store": "true",
-          "index": "analyzed",
           "term_vector": "with_positions_offsets_payloads",
           "analyzer": "my_english"
         },
