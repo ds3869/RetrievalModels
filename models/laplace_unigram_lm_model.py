@@ -22,7 +22,7 @@ class LaplaceUnigramLMModel(object):
             for i in range(len(words)):
                 p_laplace += self.laplace_unigram_lm(doc, tf_collection[i][doc])
             result[doc] = p_laplace
-            print p_laplace
+            # print p_laplace
         return result
 
     def laplace_unigram_lm(self, doc_no = '', tf_wd = 0):

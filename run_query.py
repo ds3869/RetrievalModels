@@ -3,6 +3,7 @@ from models.okapi_tf_model import OkapiTFModel
 from models.tf_idf_model import TFIDFModel
 from models.okapi_bm25 import OkapiBM25
 from models.laplace_unigram_lm_model import LaplaceUnigramLMModel
+from models.jelinekmercer_unigram_lm_model import JelinekMercerUnigramLMModel
 from utils.constants import Constants
 from utils.es import get_term_statistics
 from utils.statistics import DocumentStatistics
@@ -12,7 +13,10 @@ import os
 import threading
 
 document_statistics = {}
+tf_for_queries = {}
+wfd_collection = {}
 query_list = {}
+total_length = 0
 
 def run_built_in():
     print "Processing: built in model"
@@ -32,21 +36,12 @@ def run_built_in():
 def run_okapi_tf():
     print "Processing: Okapi TF model"
     okapi_tf = OkapiTFModel(document_statistics)
-    print query_list
     for q_no in query_list:
         query = query_list[q_no]
-        tf_collection  = []
-        words = query.split(' ')
-
-        print "Collecting the tf values"
-        for word in words:
-            w_d, tf = get_term_statistics(word)
-            tf_collection.append(tf)
-
-        results = okapi_tf.query(query, tf_collection)
+        results = okapi_tf.query(query, tf_for_queries[q_no])
         rank = 1
         for key, value in sorted(results.iteritems(), key=lambda (k,v): (v,k), reverse=True):
-            if rank > Constants.MAX_OUTPUT or value <= 0:
+            if rank > Constants.MAX_OUTPUT or value == 0:
                 break
             write_output(
                     model = 'okapi_tf',
@@ -62,20 +57,10 @@ def run_tf_idf():
     tfidf = TFIDFModel(document_statistics)
     for q_no in query_list:
         query = query_list[q_no]
-        tf_collection  = []
-        wd_collection = []
-        words = query.split(' ')
-
-        print "Collecting the tf values"
-        for word in words:
-            wd, tf = get_term_statistics(word)
-            wd_collection.append(wd)
-            tf_collection.append(tf)
-
-        results = tfidf.query(query, wd_collection, tf_collection)
+        results = tfidf.query(query, wfd_collection, tf_for_queries[q_no])
         rank = 1
         for key, value in sorted(results.iteritems(), key=lambda (k,v): (v,k), reverse=True):
-            if rank > Constants.MAX_OUTPUT or value <= 0:
+            if rank > Constants.MAX_OUTPUT or value == 0:
                 break
             write_output(
                     model = 'tfidf',
@@ -91,17 +76,7 @@ def run_bm25():
     bm25 = OkapiBM25(document_statistics)
     for q_no in query_list:
         query = query_list[q_no]
-        tf_collection  = []
-        wd_collection = []
-        words = query.split(' ')
-
-        print "Collecting the tf values"
-        for word in words:
-            wd, tf = get_term_statistics(word)
-            wd_collection.append(wd)
-            tf_collection.append(tf)
-
-        results = bm25.query(query, wd_collection, tf_collection)
+        results = bm25.query(query, wfd_collection, tf_for_queries[q_no])
         rank = 1
         for key, value in sorted(results.iteritems(), key=lambda (k,v): (v,k), reverse=True):
             if rank > Constants.MAX_OUTPUT or value <= 0:
@@ -121,15 +96,7 @@ def run_laplace_unigram():
     print query_list
     for q_no in query_list:
         query = query_list[q_no]
-        tf_collection  = []
-        words = query.split(' ')
-
-        print "Collecting the tf values"
-        for word in words:
-            w_d, tf = get_term_statistics(word)
-            tf_collection.append(tf)
-
-        results = laplace_unigram.query(query, tf_collection)
+        results = laplace_unigram.query(query, tf_for_queries[q_no])
         rank = 1
         for key, value in sorted(results.iteritems(), key=lambda (k,v): (v,k), reverse=True):
             if rank > Constants.MAX_OUTPUT or value == 0:
@@ -143,29 +110,85 @@ def run_laplace_unigram():
             rank += 1
     print "Unigram LM with Laplace done"
 
+def run_jelmer_unigram():
+    print "Processing: Unigram LM with Jelinek-Mercer model"
+    jelmer_unigram = JelinekMercerUnigramLMModel(document_statistics)
+    print query_list
+    for q_no in query_list:
+        query = query_list[q_no]
+        results = jelmer_unigram.query(query, tf_for_queries[q_no], total_length)
+        rank = 1
+        for key, value in sorted(results.iteritems(), key=lambda (k,v): (v,k), reverse=True):
+            if rank > Constants.MAX_OUTPUT or value == 0:
+                break
+            write_output(
+                    model = 'jelmer_unigram',
+                    query_no = str(q_no),
+                    doc_no = str(key),
+                    rank = str(rank),
+                    score = str(value))
+            rank += 1
+    print "Unigram LM with Jelinek Mercer done"
+
 def build_document_statistics():
     print "Building document statistics"
+    total_length = 0
     file_list = get_file_list()
     for doc_no in file_list:
         stats = DocumentStatistics(doc_no)
-        document_statistics[doc_no] = stats.length[0]
+        document_statistics[doc_no] = stats.length
+        total_length += stats.length
+    return total_length
+
+def clean_results_folder():
+    print "Removing all files in the results folder"
+    result_files = os.listdir(Constants.RESULTS_PATH)
+    for result_file in result_files:
+        os.remove(Constants.RESULTS_PATH + result_file)
+
+def build_tf_for_queries():
+    print "Collecting the tf values"
+    for q_no in query_list:
+        query = query_list[q_no]
+        tf_collection  = []
+        words = query.split(' ')
+        for word in words:
+            w_d, tf = get_term_statistics(word)
+            wfd_collection[word] = w_d
+            tf_collection.append(tf)
+        tf_for_queries[q_no] = tf_collection
 
 if __name__ == '__main__':
     """Main function
     """
     threads = []
-
+    clean_results_folder()
     query_list = build_query_list()
-    build_document_statistics()
-    run_laplace_unigram()
 
-    # t1 = threading.Thread(target=run_okapi_tf)
-    # threads.append(t1)
-    # t2 = threading.Thread(target=run_tf_idf)
-    # threads.append(t2)
-    # t3 = threading.Thread(target=run_)
-    # threads.append(t2)
 
-    # t1.start()
-    # t2.start()
+    thread_tf = threading.Thread(target=build_tf_for_queries)
+    thread_tf.start()
+    total_length = build_document_statistics()
+    print "Total document length: {0}".format(total_length)
+    thread_tf.join()
+    # print len(tf_for_queries)
+    # print wfd_collection
 
+    t0 = threading.Thread(target=run_built_in)
+    threads.append(t0)
+    t1 = threading.Thread(target=run_okapi_tf)
+    threads.append(t1)
+    t2 = threading.Thread(target=run_tf_idf)
+    threads.append(t2)
+    t3 = threading.Thread(target=run_bm25)
+    threads.append(t3)
+    t4 = threading.Thread(target=run_laplace_unigram)
+    threads.append(t4)
+    t5 = threading.Thread(target=run_jelmer_unigram)
+    threads.append(t5)
+
+    for thread in threads:
+        thread.run()
+
+    for thread in threads:
+        thread.join()

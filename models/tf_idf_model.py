@@ -21,7 +21,7 @@ class TFIDFModel(object):
             tf_idf = 0
             for i in range(len(words)):
                 okapi_tf = self.okapi_tf(doc, tf_collection[i][doc])
-                idf = self.index_statistics.doc_count / (1 + wd_collection[i])
+                idf = self.index_statistics.doc_count / (1 + wd_collection[words[i]])
 
                 tf_idf += okapi_tf * np.log(idf) 
             result[doc] = tf_idf

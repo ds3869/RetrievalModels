@@ -42,11 +42,25 @@ def get_field_statistics(_id = 'AP890201-0001'):
             body = get_es_script('term_vectors')) 
     return result["term_vectors"]['text']['field_statistics']
 
+def get_term_vectors(_id = 'AP890201-0001'):
+    """Get field statistics
+    return dictionary of field statistics
+    """
+    result = es.termvectors(index = Constants.INDEX_NAME, 
+            doc_type = Constants.DOC_TYPE,
+            id = _id, 
+            body = get_es_script('term_vectors')) 
+
+    if 'term_vectors' in result:
+        return result["term_vectors"]
+    else:
+        return {}
+
 def get_term_statistics(term):
     """Get terms statistics
     return dictionary of term frequency of each documents
     """
-    print "Getting tf for term: {0}".format(term)
+    # print "Getting tf for term: {0}".format(term)
     file_list = get_file_list()
     tf_wd = {}
     df_w = 0

@@ -25,8 +25,18 @@ class DocumentStatistics(object):
     doc_no = ''
     length = 0
 
+    def get_document_length(self, term_vectors):
+        doc_length = 0
+
+        if len(term_vectors) == 0:
+            return 0
+        else:
+            terms = term_vectors['text']['terms']
+            for term in terms:
+                doc_length += terms[term]['term_freq']
+            return doc_length
+
     def __init__(self, doc_no):
         self.doc_no = doc_no
-        body = get_es_script('get_length')
-        body['query']['terms']['_id'] = [doc_no]
-        self.length = search(body = body)['hits']['hits'][0]['fields']['doc_length']
+        term_vectors = get_term_vectors(doc_no) 
+        self.length = self.get_document_length(term_vectors) 

@@ -28,7 +28,7 @@ class OkapiBM25(object):
         for doc in file_list:
             tf = 0
             for i in range(len(words)):
-                tf += self.bm25(doc, wd_collection[i], tf_collection[i][doc])
+                tf += self.bm25(doc, wd_collection[words[i]], tf_collection[i][doc])
             result[doc] = tf
                 
         return result
