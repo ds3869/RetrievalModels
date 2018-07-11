@@ -217,23 +217,24 @@ if __name__ == '__main__':
         t.start()
 
 
-    run_built_in()
-    # t0 = threading.Thread(target=run_built_in)
-    # threads.append(t0)
-    # t1 = threading.Thread(target=run_okapi_tf)
-    # threads.append(t1)
-    # t2 = threading.Thread(target=run_tf_idf)
-    # threads.append(t2)
-    # t3 = threading.Thread(target=run_bm25)
-    # threads.append(t3)
-    # t4 = threading.Thread(target=run_laplace_unigram)
-    # threads.append(t4)
+    t0 = threading.Thread(target=run_built_in)
+    threads.append(t0)
+    t1 = threading.Thread(target=run_okapi_tf)
+    threads.append(t1)
+    t2 = threading.Thread(target=run_tf_idf)
+    threads.append(t2)
+    t3 = threading.Thread(target=run_bm25)
+    threads.append(t3)
+    t4 = threading.Thread(target=run_laplace_unigram)
+    threads.append(t4)
 
-    # for thread in threads:
-        # thread.run()
+    for thread in threads:
+        thread.run()
 
     # for thread in threads:
         # thread.join()
     for t in total_tf_threads:
         t.join()
+
+    run_jelmer_unigram()
     run_pseudo_feedback()

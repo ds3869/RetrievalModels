@@ -1,3 +1,24 @@
+Python version: 2.7
+ES version: 5.4.3
+
+Models covered:
+1. ES Built In Model
+2. Okapi TF Model
+3. TF-IDF Model
+4. Unigram with Laplace Smoothing
+5. Unigram with Jelinek-Mercer Smoothing
+6. Pseudo Feedback Relevance Model (EC)
+
+There are two main files:
+1. `doc_indexing.py` to run the indexing
+2. `run_query.py` to run the models (NOTE: You need to uncomment the model you want to run at the end of the file)
+
+NOTE:
+
+1. The generated results are in the results folder.
+2. Pseudo-feedback is using the es built-in search function as the search method and then run the algorithm to add the keywords to the query.
+3. Since the pseudo feedback relevance model takes so long to run, this case I ran only for some queries (you should be able to compare the result per query id).
+
 
 # Unigram LM with Jelinek-Mercer smoothing
 

@@ -15,6 +15,7 @@ class OkapiBM25(object):
     k1 = 1.2
     k2 = 100
     b = 0.75
+    document_statistics = {}
         
     def query(self, keywords = '', wd_collection = [], tf_collection = []):
         tf = 0

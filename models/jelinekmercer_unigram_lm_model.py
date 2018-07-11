@@ -25,7 +25,7 @@ class JelinekMercerUnigramLMModel(object):
         return result
 
     def jelinekmercer_unigram_lm(self, doc_no = '', tf_wd = 0, total_tf_wd = 0, total_doc_length = 0):
-        corpus_prob = 0.21
+        corpus_prob = 0.2
         
         doc_length = self.document_statistics[doc_no]
 
