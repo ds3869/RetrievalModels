@@ -4,6 +4,7 @@ from models.tf_idf_model import TFIDFModel
 from models.okapi_bm25 import OkapiBM25
 from models.laplace_unigram_lm_model import LaplaceUnigramLMModel
 from models.jelinekmercer_unigram_lm_model import JelinekMercerUnigramLMModel
+from models.pseudo_relevance_feedback_model import PseudoRelevanceFeedbackModel 
 from utils.constants import Constants
 from utils.es import get_term_statistics
 from utils.statistics import DocumentStatistics
@@ -139,6 +140,25 @@ def run_jelmer_unigram():
                 rank += 1
     print "Unigram LM with Jelinek Mercer done"
 
+def run_pseudo_feedback():
+    print "Processing: Pseudo Relevance Feedback model"
+    pseudo_feedback = PseudoRelevanceFeedbackModel(document_statistics)
+    for q_no in query_list:
+        query = query_list[q_no]
+        results = pseudo_feedback.query(
+                query,
+                total_length)['hits']['hits']
+        rank = 1
+        for result in results:
+            write_output(
+                    model = 'pseudo_feedback',
+                    query_no = str(q_no),
+                    doc_no = result['_id'],
+                    rank = str(rank),
+                    score = str(result['_score']))
+            rank += 1
+    print "Pseudo feedback done"
+
 def build_document_statistics():
     print "Building document statistics"
     total_length = 0
@@ -197,22 +217,23 @@ if __name__ == '__main__':
         t.start()
 
 
-    t0 = threading.Thread(target=run_built_in)
-    threads.append(t0)
-    t1 = threading.Thread(target=run_okapi_tf)
-    threads.append(t1)
-    t2 = threading.Thread(target=run_tf_idf)
-    threads.append(t2)
-    t3 = threading.Thread(target=run_bm25)
-    threads.append(t3)
-    t4 = threading.Thread(target=run_laplace_unigram)
-    threads.append(t4)
+    run_built_in()
+    # t0 = threading.Thread(target=run_built_in)
+    # threads.append(t0)
+    # t1 = threading.Thread(target=run_okapi_tf)
+    # threads.append(t1)
+    # t2 = threading.Thread(target=run_tf_idf)
+    # threads.append(t2)
+    # t3 = threading.Thread(target=run_bm25)
+    # threads.append(t3)
+    # t4 = threading.Thread(target=run_laplace_unigram)
+    # threads.append(t4)
 
-    for thread in threads:
-        thread.run()
+    # for thread in threads:
+        # thread.run()
 
     # for thread in threads:
         # thread.join()
     for t in total_tf_threads:
         t.join()
-    run_jelmer_unigram()
+    run_pseudo_feedback()
